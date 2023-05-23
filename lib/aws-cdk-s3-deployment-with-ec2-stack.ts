@@ -10,7 +10,7 @@ import { Stack, StackProps } from 'aws-cdk-lib';
 export class AwsCdkS3DeploymentWithEc2Stack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
-/*
+
     //---
     // VPC
     const vpc = new ec2.Vpc(this, 'AwsCdkTplStackVPC', {
@@ -102,8 +102,13 @@ export class AwsCdkS3DeploymentWithEc2Stack extends Stack {
     const ssm_iam_role = new iam.Role(this, 'iam_role_for_ssm', {
       assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),
       managedPolicies: [
+        // for SSM
         iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonSSMManagedInstanceCore'),
         iam.ManagedPolicy.fromAwsManagedPolicyName('CloudWatchAgentAdminPolicy'),
+        // for Parameter Store
+        iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonSSMReadOnlyAccess'),
+        // for S3 Access from EC2
+        iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonS3FullAccess'),
       ],
     });
     vpc.addInterfaceEndpoint('InterfaceEndpoint_ssm', {
@@ -143,19 +148,23 @@ export class AwsCdkS3DeploymentWithEc2Stack extends Stack {
       userData: multipartUserData,
       securityGroup: ec2_sg,
     });
-//*/
+
     //---
     // S3 deployment
 
-    const deployCodeBucket = new s3.Bucket(this, 'DeployCodeToEc2', {
+    const deployCodeBucket = new s3.Bucket(this, 'DeploymentCodeBucketToEc2', {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
     });
+    new cdk.aws_ssm.StringParameter(this, 'aws_s3_bucket_name', {
+      parameterName: '/s3_bucket_name_to_mount_on_ec2/001',
+      stringValue: deployCodeBucket.bucketName,
+    });
     new s3deploy.BucketDeployment(this, 'DeployCode', {
-      sources: [s3deploy.Source.asset('./archive.zip')],
+      sources: [s3deploy.Source.asset('./deploy_src_dir')],
       destinationBucket: deployCodeBucket,
-      //extract: false,
-      destinationKeyPrefix: 'archive.zip', // optional prefix in destination bucket
+      extract: false,
+      destinationKeyPrefix: 'deploy_code', // optional prefix in destination bucket
     });
     
     //---
