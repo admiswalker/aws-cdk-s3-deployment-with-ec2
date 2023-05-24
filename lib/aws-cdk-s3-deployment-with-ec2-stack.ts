@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as events from 'aws-cdk-lib/aws-events';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
@@ -167,6 +168,41 @@ export class AwsCdkS3DeploymentWithEc2Stack extends Stack {
       destinationKeyPrefix: 'deploy_code', // optional prefix in destination bucket
     });
     
+    //---
+    // Run command
+
+    const runCommandRole = new iam.Role(this, 'run-command-role', {
+      assumedBy: new iam.ServicePrincipal('events.amazonaws.com'),
+    });
+    runCommandRole.addToPolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: ['ssm:SendCommand'],
+      resources: [
+        'arn:aws:ssm:ap-northeast-1:*:document/AWS-RunShellScript',
+        'arn:aws:ec2:ap-northeast-1:*:instance/*',
+      ],
+    }));
+    new events.CfnRule(this, 'example-rule', {
+      description: 'example-rule',
+      name: 'example-rule',
+      scheduleExpression: 'cron(*/1 * * * ? *)', // ref: https://docs.aws.amazon.com/ja_jp/AmazonCloudWatch/latest/events/ScheduledEvents.html
+      targets: [
+        {
+          arn: `arn:aws:ssm:${props?.env?.region}::document/AWS-RunShellScript`,
+          id: '1',
+          input: JSON.stringify({
+            commands: ["/bin/bash /usr/local/test_hello_py/main.sh"],
+            //workingDirecory: ['/home/ec2-user']
+          }),
+          roleArn: runCommandRole.roleArn,
+          runCommandParameters: {
+            //runCommandTargets: [{ key: "tag:Name", values: ["AwsCdkS3DeploymentWithEc2Stack/General_purpose_ec2"] }],
+            runCommandTargets: [{ key: "InstanceIds", values: [ec2_instance.instanceId] }],
+          },
+        },
+      ],
+    });
+
     //---
   }
 }

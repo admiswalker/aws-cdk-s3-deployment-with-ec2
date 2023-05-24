@@ -9,5 +9,5 @@ const env = {
 
 const app = new cdk.App();
 new AwsCdkS3DeploymentWithEc2Stack(app, 'AwsCdkS3DeploymentWithEc2Stack', {
-    env: env,
+  env: env,
 });

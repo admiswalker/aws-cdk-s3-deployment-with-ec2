@@ -35,7 +35,8 @@ runcmd: # run by "scripts-user" option
   - echo ""
   - INST_DIR=/usr/local/test_hello_py
   - mkdir -p ${INST_DIR}
-  - sudo cp ${TMP_DIR}/main.py ${INST_DIR}/
+  - sudo cp ${TMP_DIR}/main.sh ${INST_DIR}/
+  - sudo chmod +x ${TMP_DIR}/main.sh
   - echo "------------------------------------------------------------------------ end ---"
   - echo ""
   - echo ""
