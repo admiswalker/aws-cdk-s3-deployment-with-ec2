@@ -1,4 +1,4 @@
-# aws-cdk-s3-deployment-with-ec2
+# aws-cdk-s3-obj-deployment-with-ec2-run-command
 
 
 ## 構成図
