@@ -1,6 +1,6 @@
 #cloud-config
 cloud_final_modules:
-  - [users-groups, always]
+  - [scripts-user, users-groups, always]
 users: # run by "users-groups" option
   - default
   - name: admis
@@ -20,8 +20,9 @@ runcmd: # run by "scripts-user" option
   - echo "--- begin --- install deploy code ----------------------------------------------"
   - echo "Get bucket name from parameter store"
   - PARAMETER_STORE_PATH=/s3_bucket_name_to_mount_on_ec2/001
+  - DST_KEY_PREFIX=deploy_code
   - BUCKET_NAME=$(aws ssm get-parameter --name ${PARAMETER_STORE_PATH} --query "Parameter.Value" --region ${DEPLOY_REGION} | tr -d '"')
-  - FILE_NAME=$(aws s3 ls ${BUCKET_NAME} | awk '{print $4}')
+  - FILE_NAME=$(aws s3 ls ${BUCKET_NAME}/${DST_KEY_PREFIX}/ | awk '{print $4}')
   - echo ""
   - 'echo "PARAMETER_STORE_PATH: "${PARAMETER_STORE_PATH}'
   - 'echo "BUCKET_NAME: "${BUCKET_NAME}'
@@ -29,12 +30,12 @@ runcmd: # run by "scripts-user" option
   - echo ""
   - TMP_DIR=/tmp/deploy
   - mkdir -p ${TMP_DIR}
-  - aws s3 cp s3://${BUCKET_NAME}/${FILE_NAME} ${TMP_DIR}
-  - unzip ${TMP_DIR}/${FILE_NAME}
+  - sudo aws s3 cp s3://${BUCKET_NAME}/${DST_KEY_PREFIX}/${FILE_NAME} ${TMP_DIR}
+  - sudo unzip ${TMP_DIR}/${FILE_NAME} -d ${TMP_DIR}
   - echo ""
   - INST_DIR=/usr/local/test_hello_py
   - mkdir -p ${INST_DIR}
-  - cp ./main.py ${INST_DIR}/
+  - sudo cp ${TMP_DIR}/main.py ${INST_DIR}/
   - echo "------------------------------------------------------------------------ end ---"
   - echo ""
   - echo ""

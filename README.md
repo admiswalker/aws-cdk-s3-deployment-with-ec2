@@ -9,7 +9,7 @@
 
 ```bash
 EC2_INSTANCE_ID=$(aws ec2 describe-instances \
-    --filters "Name=tag:Name,Values=AwsCdkTplStack/General_purpose_ec2" \
+    --filters "Name=tag:Name,Values=AwsCdkS3DeploymentWithEc2Stack/General_purpose_ec2" \
     --query "Reservations[].Instances[?State.Name=='running'].InstanceId[]" \
     --output text)
 ssh -i ~/.ssh/ec2/id_ed25519 admis@$EC2_INSTANCE_ID
@@ -21,7 +21,7 @@ ssh -i ~/.ssh/ec2/id_ed25519 admis@$EC2_INSTANCE_ID
 
 ```bash
 NAT_INSTANCE_ID=$(aws ec2 describe-instances \
-    --filters "Name=tag:Name,Values=AwsCdkTplStack/NatInstance" \
+    --filters "Name=tag:Name,Values=AwsCdkS3DeploymentWithEc2Stack/NatInstance" \
     --query "Reservations[].Instances[?State.Name=='running'].InstanceId[]" \
     --output text)
 ssh -i ~/.ssh/ec2/id_ed25519 admis@$NAT_INSTANCE_ID
